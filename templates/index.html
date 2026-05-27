@@ -2,443 +2,317 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Траектория | цифровая модель PONR</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Inter', 'Segoe UI', sans-serif;
-            background: #0a0c15;
-            min-height: 100vh;
-            color: #e0e0e0;
-            position: relative;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #eef2f5;
+            color: #1a2a3a;
+            padding: 24px;
         }
-
-        /* Анимированный кибер-фон */
-        .cyber-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: linear-gradient(135deg, #0a0c15 0%, #0f1230 50%, #0a0c15 100%);
-        }
-
-        .cyber-bg::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: 
-                repeating-linear-gradient(0deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 50px),
-                repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.03) 0px, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 50px);
-            animation: moveGrid 20s linear infinite;
-        }
-
-        @keyframes moveGrid {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-
+        
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
-            position: relative;
-            z-index: 1;
         }
-
+        
+        /* Карточки в спокойном стиле */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e0e8f0;
+        }
+        
+        .card h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a3a5c;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #2c6e9e;
+            display: inline-block;
+        }
+        
         /* Шапка */
         .header {
-            background: rgba(10, 20, 40, 0.75);
-            backdrop-filter: blur(12px);
-            border-radius: 24px;
+            background: #1a3a5c;
+            color: white;
+            border-radius: 20px;
             padding: 20px 32px;
-            margin-bottom: 32px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+            margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 20px;
         }
-
+        
         .logo h1 {
-            font-size: 28px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: 2px;
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
-
+        
         .logo p {
             font-size: 12px;
-            color: #8a9bb5;
-            margin-top: 6px;
-            letter-spacing: 1px;
-        }
-
-        .institute {
-            text-align: right;
-        }
-
-        .institute .uni {
-            font-size: 14px;
-            font-weight: 600;
-            color: #00d4ff;
-        }
-
-        .institute .faculty {
-            font-size: 11px;
-            color: #8a9bb5;
+            opacity: 0.8;
             margin-top: 4px;
         }
-
-        .institute .author {
-            font-size: 10px;
-            color: #5a6e8a;
-            margin-top: 6px;
+        
+        .institute {
+            text-align: right;
+            font-size: 12px;
         }
-
-        /* Карточки */
-        .card {
-            background: rgba(10, 20, 40, 0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 28px;
-            margin-bottom: 32px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            border-color: rgba(0, 212, 255, 0.5);
-            box-shadow: 0 0 25px rgba(0, 212, 255, 0.15);
-        }
-
-        .card h2 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #00d4ff;
-            margin-bottom: 24px;
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card h2::before {
-            content: '⚡';
-            font-size: 24px;
-        }
-
-        /* Сетка ввода */
+        
+        .institute .uni { font-weight: 600; margin-bottom: 4px; }
+        .institute .faculty { opacity: 0.8; }
+        .institute .author { opacity: 0.7; margin-top: 6px; }
+        
+        /* Поля ввода */
         .input-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
+            margin-bottom: 24px;
         }
-
+        
         .input-group {
             display: flex;
             flex-direction: column;
         }
-
+        
         .input-group label {
             font-size: 12px;
             font-weight: 600;
-            color: #8a9bb5;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
+            color: #4a6a8a;
+            margin-bottom: 6px;
         }
-
+        
         .input-group input, .input-group select {
-            background: rgba(0, 10, 20, 0.8);
-            border: 1px solid #2a3a5a;
+            padding: 12px 14px;
+            border: 1px solid #c0d0e0;
             border-radius: 12px;
-            padding: 14px 16px;
-            color: #00d4ff;
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s;
+            background: white;
+            transition: 0.2s;
         }
-
+        
         .input-group input:focus, .input-group select:focus {
             outline: none;
-            border-color: #00d4ff;
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+            border-color: #2c6e9e;
+            box-shadow: 0 0 0 3px rgba(44, 110, 158, 0.1);
         }
-
+        
         .calculate-btn {
-            background: linear-gradient(90deg, #00aaff, #0066cc);
+            background: #2c6e9e;
+            color: white;
             border: none;
             border-radius: 40px;
-            padding: 16px 32px;
-            color: white;
-            font-weight: 700;
-            font-size: 16px;
+            padding: 14px 28px;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 24px;
             width: 100%;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            font-size: 15px;
+            transition: 0.2s;
         }
-
+        
         .calculate-btn:hover {
-            background: linear-gradient(90deg, #00ccff, #0088ee);
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
-            transform: translateY(-2px);
+            background: #1a5a8a;
         }
-
+        
         /* Статистика */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
+            gap: 16px;
             margin-bottom: 32px;
         }
-
+        
         .stat-card {
-            background: rgba(0, 20, 40, 0.6);
-            border-radius: 20px;
-            padding: 20px;
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 16px;
             text-align: center;
-            border-left: 3px solid #00d4ff;
-            transition: all 0.3s;
+            border-left: 3px solid #2c6e9e;
         }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            background: rgba(0, 40, 60, 0.6);
-        }
-
+        
         .stat-label {
             font-size: 11px;
             font-weight: 600;
-            color: #8a9bb5;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
+            color: #6a8aaa;
+            margin-bottom: 8px;
         }
-
+        
         .stat-value {
-            font-size: 32px;
-            font-weight: 800;
+            font-size: 28px;
+            font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
+            color: #1a3a5c;
         }
-
-        .stat-value.positive { color: #00ff88; text-shadow: 0 0 10px rgba(0, 255, 136, 0.25); }
-        .stat-value.negative { color: #ff4466; text-shadow: 0 0 10px rgba(255, 68, 102, 0.25); }
-        .stat-value.neutral { color: #00d4ff; }
-
+        
+        .stat-value.positive { color: #2c8e5e; }
+        .stat-value.negative { color: #c03a4a; }
+        
         /* Таблица */
         .scenarios-table {
             width: 100%;
             border-collapse: collapse;
         }
-
+        
         .scenarios-table th {
-            padding: 14px 12px;
             text-align: center;
+            padding: 12px;
             font-size: 12px;
             font-weight: 600;
-            color: #00d4ff;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #2a3a5a;
+            color: #4a6a8a;
+            border-bottom: 1px solid #e0e8f0;
         }
-
+        
         .scenarios-table td {
-            padding: 14px 12px;
             text-align: center;
+            padding: 12px;
             font-size: 13px;
-            border-bottom: 1px solid #1a2a3a;
+            border-bottom: 1px solid #eef2f8;
         }
-
+        
         .optimal-row {
-            background: rgba(0, 212, 255, 0.08);
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+            background: #e8f4fd;
         }
-
-        .optimal-row td {
-            border-bottom-color: rgba(0, 212, 255, 0.4);
+        
+        /* График */
+        .chart-container {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e8f0;
         }
-
-        /* ИИ-помощник Ракета */
+        
+        /* ИИ-помощник */
         .ai-panel {
-            background: linear-gradient(135deg, rgba(0, 40, 60, 0.6), rgba(0, 20, 40, 0.6));
-            border-radius: 24px;
-            padding: 28px;
-            border-left: 4px solid #00d4ff;
+            background: #f0f4f8;
+            border-radius: 20px;
+            padding: 24px;
+            border-left: 4px solid #2c6e9e;
         }
-
+        
         .ai-panel h3 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 600;
-            color: #00d4ff;
+            color: #1a3a5c;
             margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
-
+        
         .ai-text {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Inter', monospace;
             font-size: 13px;
-            line-height: 1.7;
-            color: #c0d0e0;
+            line-height: 1.6;
+            color: #2a4a6a;
             white-space: pre-wrap;
         }
-
-        /* Футер */
+        
         .footer {
             text-align: center;
-            padding: 24px;
+            padding: 20px;
             font-size: 11px;
-            color: #4a5a7a;
-            border-top: 1px solid #1a2a3a;
-            margin-top: 20px;
+            color: #8aa0b5;
+            border-top: 1px solid #e0e8f0;
+            margin-top: 24px;
         }
-
-        /* Адаптив */
-        @media (max-width: 900px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .header {
-                flex-direction: column;
-                text-align: center;
-            }
-            .institute {
-                text-align: center;
-            }
-            .container {
-                padding: 12px;
-            }
-            .card {
-                padding: 20px;
-            }
-        }
-
-        /* Лоадер */
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #00d4ff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { flex-direction: column; text-align: center; gap: 12px; }
+            .institute { text-align: center; }
         }
     </style>
 </head>
 <body>
-<div class="cyber-bg"></div>
 <div class="container">
     <div class="header">
         <div class="logo">
-            <h1>ТРАЕКТОРИЯ</h1>
+            <h1>Траектория</h1>
             <p>цифровая модель идентификации точки невозврата</p>
         </div>
         <div class="institute">
-            <div class="uni">САМАРСКИЙ УНИВЕРСИТЕТ</div>
+            <div class="uni">Самарский университет</div>
             <div class="faculty">Институт экономики и управления | Бизнес-информатика</div>
             <div class="author">А.А. Акопян</div>
         </div>
     </div>
 
     <div class="card">
-        <h2>ПАРАМЕТРЫ МОДЕЛИ</h2>
+        <h2>Параметры модели</h2>
         <div class="input-grid">
             <div class="input-group">
-                <label>НАЧАЛЬНЫЙ ИЗНОС (D₀), %</label>
+                <label>Начальный износ (D₀), %</label>
                 <input type="number" id="D0" value="85" step="5" min="0" max="100">
             </div>
             <div class="input-group">
-                <label>ИНВЕСТИЦИИ (I_total), млн руб.</label>
+                <label>Инвестиции (I_total), млн руб.</label>
                 <input type="number" id="I_total" value="0" step="10" min="0" max="200">
             </div>
             <div class="input-group">
-                <label>ДОЛЯ КОММЕРЧЕСКИХ КЛИЕНТОВ (θ), %</label>
+                <label>Доля коммерческих клиентов (θ), %</label>
                 <input type="number" id="theta" value="5" step="5" min="0" max="100">
             </div>
             <div class="input-group">
-                <label>ЦЕЛЕВАЯ СУБСИДИЯ</label>
+                <label>Целевая субсидия</label>
                 <select id="subsidy">
                     <option value="0">Нет</option>
                     <option value="1">Да</option>
                 </select>
             </div>
         </div>
-        <button class="calculate-btn" id="calcBtn" onclick="calculate()">▶ ВЫПОЛНИТЬ ПРОГНОЗИРОВАНИЕ</button>
+        <button class="calculate-btn" id="calcBtn" onclick="calculate()">Выполнить прогнозирование</button>
     </div>
 
     <div id="results" style="display: none;">
         <div class="card">
-            <h2>БАЗОВЫЙ СЦЕНАРИЙ</h2>
+            <h2>Базовый сценарий</h2>
             <div class="stats-grid" id="baseStats"></div>
-
-            <h2 style="margin-top: 20px;">СЦЕНАРНЫЙ АНАЛИЗ</h2>
+            
+            <h2 style="margin-top: 20px;">Сценарный анализ</h2>
             <table class="scenarios-table">
-                <thead>
-                    <tr>
-                        <th>Сценарий</th>
-                        <th>NPV, млн руб.</th>
-                        <th>Π_risk, млн руб.</th>
-                        <th>P_ponr</th>
-                        <th>Время до PONR, мес.</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Сценарий</th><th>NPV, млн руб.</th><th>Π_risk, млн руб.</th><th>P_ponr</th><th>Время до PONR, мес.</th></tr></thead>
                 <tbody id="scenariosBody"></tbody>
             </table>
+            
+            <div class="chart-container">
+                <canvas id="ponrChart" width="400" height="200" style="max-height: 250px;"></canvas>
+            </div>
         </div>
 
         <div class="ai-panel">
-            <h3>🚀 РАКЕТА (аналитический модуль)</h3>
+            <h3>РАКЕТА (аналитический модуль)</h3>
             <div class="ai-text" id="aiText">Загрузка рекомендаций...</div>
         </div>
     </div>
 
     <div class="footer">
-        © 2026 Самарский университет | Институт экономики и управления | Разработка цифровой модели поиска точек невозврата
+        © 2026 Самарский университет | Институт экономики и управления
     </div>
 </div>
 
 <script>
+    let chart = null;
+    
     async function calculate() {
         const btn = document.getElementById('calcBtn');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="loader"></span> РАСЧЁТ...';
         btn.disabled = true;
-
+        btn.textContent = 'Расчёт...';
+        
         const D0 = document.getElementById('D0').value;
         const I_total = document.getElementById('I_total').value;
         const theta = document.getElementById('theta').value;
         const subsidy = document.getElementById('subsidy').value;
-
+        
         try {
             const response = await fetch('/calculate', {
                 method: 'POST',
@@ -446,7 +320,7 @@
                 body: JSON.stringify({ D0, I_total, theta, subsidy })
             });
             const data = await response.json();
-
+            
             if (data.success) {
                 document.getElementById('results').style.display = 'block';
                 
@@ -454,17 +328,17 @@
                 document.getElementById('baseStats').innerHTML = `
                     <div class="stat-card"><div class="stat-label">NPV, млн руб.</div><div class="stat-value ${base.NPV >= 0 ? 'positive' : 'negative'}">${base.NPV}</div></div>
                     <div class="stat-card"><div class="stat-label">Π_risk, млн руб.</div><div class="stat-value ${base.Pi_risk >= 0 ? 'positive' : 'negative'}">${base.Pi_risk}</div></div>
-                    <div class="stat-card"><div class="stat-label">P_ponr</div><div class="stat-value neutral">${base.P_ponr}</div></div>
-                    <div class="stat-card"><div class="stat-label">Время до PONR, мес.</div><div class="stat-value neutral">${base.ponr_time}</div></div>
+                    <div class="stat-card"><div class="stat-label">P_ponr</div><div class="stat-value">${base.P_ponr}</div></div>
+                    <div class="stat-card"><div class="stat-label">Время до PONR, мес.</div><div class="stat-value">${base.ponr_time}</div></div>
                 `;
-
+                
                 const scenarios = data.scenarios;
                 const optimal = data.optimal;
                 let html = '';
                 for (const [key, sc] of Object.entries(scenarios)) {
                     const isOptimal = (key === optimal);
                     html += `<tr class="${isOptimal ? 'optimal-row' : ''}">
-                        <td><strong>${sc.name}</strong> ${isOptimal ? '🏆' : ''}</td>
+                        <td><strong>${sc.name}</strong> ${isOptimal ? '✓' : ''}</td>
                         <td class="${sc.NPV >= 0 ? 'positive' : 'negative'}">${sc.NPV}</td>
                         <td class="${sc.Pi_risk >= 0 ? 'positive' : 'negative'}">${sc.Pi_risk}</td>
                         <td>${sc.P_ponr}</td>
@@ -473,14 +347,46 @@
                 }
                 document.getElementById('scenariosBody').innerHTML = html;
                 document.getElementById('aiText').innerHTML = data.ai_recommendation.replace(/\n/g, '<br>');
+                
+                // График вероятности PONR (имитация динамики)
+                if (chart) chart.destroy();
+                const ctx = document.getElementById('ponrChart').getContext('2d');
+                const months = Array.from({length: 60}, (_, i) => i + 1);
+                const probData = months.map(m => Math.min(1, base.P_ponr * Math.exp(m / 30)));
+                chart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Вероятность PONR',
+                            data: probData,
+                            borderColor: '#2c6e9e',
+                            backgroundColor: 'rgba(44, 110, 158, 0.05)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: { callbacks: { label: (ctx) => `${(ctx.raw * 100).toFixed(1)}%` } }
+                        },
+                        scales: {
+                            y: { title: { display: true, text: 'Вероятность' }, min: 0, max: 1, ticks: { callback: (v) => `${(v*100)}%` } },
+                            x: { title: { display: true, text: 'Месяцы' } }
+                        }
+                    }
+                });
             } else {
                 alert('Ошибка: ' + data.error);
             }
         } catch (err) {
             alert('Ошибка соединения: ' + err.message);
         } finally {
-            btn.innerHTML = originalText;
             btn.disabled = false;
+            btn.textContent = 'Выполнить прогнозирование';
         }
     }
 </script>
