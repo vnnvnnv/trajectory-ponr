@@ -132,17 +132,17 @@ def calculate():
         subsidy = int(data.get('subsidy', 0))
         base_result = calculator.run_monte_carlo(D0, I_total, theta, subsidy, n_iter=2000)
         scenarios, optimal = generate_scenarios(D0, I_total, subsidy)
-        ai_text = f"""🎯 **Анализ текущей конфигурации**
+        ai_text = f"""🎯 Анализ текущей конфигурации
 📊 Время до PONR: {base_result['ponr_time']} мес.
 🎯 Целевой горизонт: 48 мес.
 
-**Рекомендации:**
+Рекомендации:
 1. 🔧 Снижение износа до 65% отсрочит PONR на 12-18 мес.
 2. 📈 Повышение доли коммерческих клиентов до 40% увеличит денежный поток
 3. 💰 Инвестиции 50 млн руб. в инфраструктуру дадут долгосрочный эффект
 4. 🏛️ Целевая субсидия снизит нагрузку на бюджет университета
 
-**Вывод:** Для достижения целевого горизонта необходимо реализовать минимум две рекомендации."""
+Вывод: Для достижения целевого горизонта необходимо реализовать минимум две рекомендации."""
         return jsonify({'success': True, 'base': base_result, 'scenarios': scenarios, 'optimal': optimal, 'ai_recommendation': ai_text})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
