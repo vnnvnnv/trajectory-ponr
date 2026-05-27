@@ -58,6 +58,7 @@ class PonrCalculator:
         t = 0
         ponr_reached = False
         CF_history = []
+        prob_history = []
         if I_total > 0:
             reduction = min(0.6, I_total / 100)
             D = max(0.2, D * (1 - reduction))
@@ -74,6 +75,7 @@ class PonrCalculator:
             Occ_pct = (Q_fact / (self.Q_max_summer if season == 'summer' else self.Q_max_winter)) * 100
             P_ponr = self.ponr_probability(D, CF, Occ_pct, subsidy)
             CF_history.append(CF)
+            prob_history.append(P_ponr)
             if P_ponr > 0.7 and D > 0.75:
                 ponr_reached = True
                 ponr_time = t
@@ -82,26 +84,43 @@ class PonrCalculator:
             t += 1
         if not ponr_reached:
             ponr_time = 60
-        return {'CF_history': CF_history, 'ponr_time': ponr_time, 'ponr_reached': ponr_reached}
+        return {
+            'CF_history': CF_history,
+            'prob_history': prob_history,
+            'ponr_time': ponr_time,
+            'ponr_reached': ponr_reached
+        }
 
-    def run_monte_carlo(self, D0, I_total, theta, subsidy, n_iter=3000):
+    def run_monte_carlo(self, D0, I_total, theta, subsidy, n_iter=2000):
         all_cf = []
+        all_probs = []
         ponr_times = []
         for _ in range(n_iter):
             result = self.simulate_trajectory(D0, I_total, theta, subsidy)
             all_cf.append(result['CF_history'])
+            all_probs.append(result['prob_history'])
             ponr_times.append(result['ponr_time'])
         max_len = max(len(cf) for cf in all_cf)
         CF_avg = np.zeros(max_len)
+        prob_avg = np.zeros(max_len)
         for cf in all_cf:
             CF_avg[:len(cf)] += np.array(cf)
+        for prob in all_probs:
+            prob_avg[:len(prob)] += np.array(prob)
         CF_avg /= n_iter
+        prob_avg /= n_iter
         discount_factors = [(1 + self.r) ** (t / 12) for t in range(max_len)]
         NPV = np.sum(CF_avg[:max_len] / discount_factors[:max_len]) - I_total
         P_ponr = np.mean([1 if t < 60 else 0 for t in ponr_times])
         mean_ponr_time = np.mean(ponr_times)
         Pi_risk = NPV - self.rho * P_ponr
-        return {'NPV': round(NPV, 1), 'Pi_risk': round(Pi_risk, 1), 'P_ponr': round(P_ponr, 2), 'ponr_time': round(mean_ponr_time, 1)}
+        return {
+            'NPV': round(NPV, 1),
+            'Pi_risk': round(Pi_risk, 1),
+            'P_ponr': round(P_ponr, 2),
+            'ponr_time': round(mean_ponr_time, 1),
+            'prob_history': prob_avg.tolist()
+        }
 
 calculator = PonrCalculator()
 
@@ -113,8 +132,14 @@ def generate_scenarios(D0, I_total, subsidy):
     }
     results = {}
     for key, config in scenarios.items():
-        res = calculator.run_monte_carlo(D0, I_total, config['theta'], subsidy, n_iter=2000)
-        results[key] = {**res, 'name': config['name']}
+        res = calculator.run_monte_carlo(D0, I_total, config['theta'], subsidy, n_iter=1500)
+        results[key] = {
+            'name': config['name'],
+            'NPV': res['NPV'],
+            'Pi_risk': res['Pi_risk'],
+            'P_ponr': res['P_ponr'],
+            'ponr_time': res['ponr_time']
+        }
     optimal = max(results.keys(), key=lambda k: results[k]['Pi_risk'])
     return results, optimal
 
@@ -130,20 +155,74 @@ def calculate():
         I_total = float(data.get('I_total', 0))
         theta = float(data.get('theta', 5)) / 100
         subsidy = int(data.get('subsidy', 0))
-        base_result = calculator.run_monte_carlo(D0, I_total, theta, subsidy, n_iter=2000)
+
+        base_result = calculator.run_monte_carlo(D0, I_total, theta, subsidy, n_iter=1500)
         scenarios, optimal = generate_scenarios(D0, I_total, subsidy)
-        ai_text = f"""🎯 Анализ текущей конфигурации
-📊 Время до PONR: {base_result['ponr_time']} мес.
-🎯 Целевой горизонт: 48 мес.
 
-Рекомендации:
-1. 🔧 Снижение износа до 65% отсрочит PONR на 12-18 мес.
-2. 📈 Повышение доли коммерческих клиентов до 40% увеличит денежный поток
-3. 💰 Инвестиции 50 млн руб. в инфраструктуру дадут долгосрочный эффект
-4. 🏛️ Целевая субсидия снизит нагрузку на бюджет университета
+        ponr_time = base_result['ponr_time']
+        npv = base_result['NPV']
+        pi_risk = base_result['Pi_risk']
+        p_ponr = base_result['P_ponr']
+        prob_history = base_result['prob_history']
 
-Вывод: Для достижения целевого горизонта необходимо реализовать минимум две рекомендации."""
-        return jsonify({'success': True, 'base': base_result, 'scenarios': scenarios, 'optimal': optimal, 'ai_recommendation': ai_text})
+        # Генерация умных рекомендаций на основе реальных цифр
+        recommendations = []
+
+        if ponr_time < 24:
+            recommendations.append("Критически низкое время до точки невозврата (менее 24 месяцев). Требуется немедленное вмешательство.")
+        elif ponr_time < 48:
+            recommendations.append(f"Время до PONR ({ponr_time:.0f} мес.) ниже целевого горизонта (48 мес.). Рекомендуется реализация антикризисных мер.")
+
+        if p_ponr > 0.7:
+            recommendations.append(f"Вероятность достижения PONR составляет {p_ponr*100:.0f}%, что превышает критический порог 70%. Необходимо снижение износа или увеличение коммерческой загрузки.")
+        elif p_ponr > 0.5:
+            recommendations.append(f"Вероятность PONR ({p_ponr*100:.0f}%) находится в зоне повышенного риска. Рекомендуется мониторинг и точечные улучшения.")
+
+        if pi_risk < -50:
+            recommendations.append(f"Риск-скорректированная прибыль составляет {pi_risk:.1f} млн руб. — крайне низкий показатель. Требуется смена бизнес-модели или привлечение субсидии.")
+        elif pi_risk < 0:
+            recommendations.append(f"Отрицательная Π_risk ({pi_risk:.1f} млн руб.) указывает на неэффективность текущей стратегии. Рекомендуется пересмотр инвестиционной политики.")
+
+        if D0 > 0.7 and I_total < 50:
+            recommendations.append(f"Высокий начальный износ ({D0*100:.0f}%) при недостаточных инвестициях ({I_total:.0f} млн руб.) — ключевой фактор риска. Рекомендуется увеличение финансирования до 50 млн руб.")
+        elif D0 > 0.7:
+            recommendations.append(f"Износ ({D0*100:.0f}%) остаётся критическим даже после инвестиций. Требуется перепрофилирование или точечный капитальный ремонт.")
+
+        if theta < 0.3 and ponr_time < 48:
+            recommendations.append(f"Низкая доля коммерческих клиентов ({theta*100:.0f}%) ограничивает доходную часть. Рекомендуется повышение до 35-40% через спортивные сборы и корпоративные заезды.")
+
+        if not recommendations:
+            recommendations.append("Показатели в норме. Рекомендуется плановый мониторинг и поддержание достигнутых параметров.")
+
+        ai_text = f"""Анализ текущей конфигурации
+
+Время до PONR: {ponr_time:.1f} мес.
+Целевой горизонт: 48 мес.
+NPV: {npv:.1f} млн руб.
+Риск-скорректированная прибыль (Π_risk): {pi_risk:.1f} млн руб.
+Вероятность PONR: {p_ponr*100:.0f}%
+
+Оценка состояния: {"критическое" if ponr_time < 24 else "неудовлетворительное" if ponr_time < 36 else "удовлетворительное" if ponr_time < 48 else "нормальное"}.
+
+Рекомендации (сформированы на основе расчётных данных):
+
+""" + "\n".join([f"{i+1}. {rec}" for i, rec in enumerate(recommendations[:5])]) + """
+
+Вывод: """ + ("Требуется комплексное вмешательство: снижение износа, повышение коммерческой доли и привлечение финансирования." if ponr_time < 36 else "Текущая стратегия требует корректировки, но объект может быть сохранён при выполнении рекомендаций." if ponr_time < 48 else "Параметры находятся в допустимом диапазоне. Рекомендуется плановый мониторинг.")
+
+        return jsonify({
+            'success': True,
+            'base': {
+                'NPV': base_result['NPV'],
+                'Pi_risk': base_result['Pi_risk'],
+                'P_ponr': base_result['P_ponr'],
+                'ponr_time': base_result['ponr_time']
+            },
+            'scenarios': scenarios,
+            'optimal': optimal,
+            'prob_history': prob_history,
+            'ai_recommendation': ai_text
+        })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
